@@ -28,10 +28,32 @@
 
 @implementation NSString(roobasoft)
 
++ (NSString *) stringWithUUID
+{
+    CFUUIDRef	uuidObj = CFUUIDCreate(nil);//create a new UUID
+    // get the string representation of the UUID
+    NSString	*newUUID = (NSString*)CFUUIDCreateString(nil, uuidObj);
+    CFRelease(uuidObj);
+    return [newUUID autorelease];
+}
+
 - (NSString *)urlEncode
 {
-    NSString *result = (NSString *) CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, (CFStringRef)self, NULL, CFSTR("?=&+"), kCFStringEncodingUTF8);
+    NSString *result = (NSString *) CFURLCreateStringByAddingPercentEscapes(kCFAllocatorDefault, (CFStringRef)self, NULL, CFSTR("?=&+\""), kCFStringEncodingUTF8);
     return [result autorelease];
+}
+
+// assumes self is in form
+// 2008-10-29T06:22:08-0600
+- (NSDate *) dateFromJSON
+{
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"y-M-d H:m:sZ"];
+    NSDate *ret = [formatter dateFromString:[self stringByReplacingOccurrencesOfString:@"T" withString:@" "]];    
+    
+    [formatter release];
+    
+    return ret;
 }
 
 @end

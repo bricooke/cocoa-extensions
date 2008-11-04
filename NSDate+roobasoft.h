@@ -27,6 +27,10 @@
 
 
 @interface NSDate (roobasoft)
++ (void)     setMidnightOffset:(NSInteger)offset; 
+                                // how many hours into the next day
+                                // should be considered 'today'
+
 + (NSDate *) midnight;
 - (NSDate *) midnight;
 
@@ -37,4 +41,6 @@
 - (NSDate *) yesterday;
 
 - (NSString *) pretty;
+
+- (NSString *) description;
 @end

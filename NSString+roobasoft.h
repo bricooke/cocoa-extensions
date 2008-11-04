@@ -27,5 +27,9 @@
 
 
 @interface NSString(roobasoft)
-- (NSString *)urlEncode;
+// via http://vgable.com/blog/2008/02/24/creating-a-uuid-guid-in-cocoa/
++ (NSString *) stringWithUUID;
+
+- (NSString *) urlEncode;
+- (NSDate *)   dateFromJSON; // 2008-10-29T06:22:08-0600 -> NSDate
 @end

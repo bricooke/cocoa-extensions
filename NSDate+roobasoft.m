@@ -25,15 +25,33 @@
 
 #import "NSDate+roobasoft.h"
 
+// needs tests!
+
+static int midnight_offset = 0;
+
 @implementation NSDate (roobasoft)
++ (void) setMidnightOffset:(NSInteger)offset
+{
+    midnight_offset = offset;
+}
+
 + (NSDate *) midnight
 {
     return [[NSDate date] midnight];
 }
 - (NSDate *) midnight
-{
-    NSDateComponents *comps = [[NSCalendar currentCalendar] components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit fromDate:self];
-    return [[NSCalendar currentCalendar] dateFromComponents:comps];
+{    
+    NSDateComponents *comps = [[NSCalendar currentCalendar] components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit|NSHourCalendarUnit|NSMinuteCalendarUnit fromDate:self];
+    // if it's not midnight_offset hours into the day, it's yesterday
+    if ([comps hour] < midnight_offset)
+    {
+        return [[[self yesterday] addTimeInterval:(midnight_offset*60*60)+1] midnight];
+    }
+    else
+    {
+        comps = [[NSCalendar currentCalendar] components:NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit fromDate:self];
+        return [[[NSCalendar currentCalendar] dateFromComponents:comps] addTimeInterval:midnight_offset*60*60];        
+    }
 }
 
 + (NSDate *) tomorrow
@@ -43,7 +61,18 @@
 
 - (NSDate *) tomorrow
 {
-    return [self addTimeInterval:(24*60*60)];
+    NSDate *t = [self addTimeInterval:(24*60*60)];
+    
+    // handle day light saving changes!
+    // if the hour is different we were adjusted. adjust back.
+    NSDateComponents *self_comps = [[NSCalendar currentCalendar] components:NSHourCalendarUnit fromDate:self];
+    NSDateComponents *tomorrow_comps = [[NSCalendar currentCalendar] components:NSHourCalendarUnit fromDate:t];
+    
+    if ([tomorrow_comps hour] != [self_comps hour])
+    {
+        t = [t addTimeInterval:(60*60)*[tomorrow_comps hour] - [self_comps hour]];
+    }
+    return t;
 }
 
 + (NSDate *) yesterday
@@ -69,6 +98,20 @@
     }
     
     NSDateComponents *comps = [[NSCalendar currentCalendar] components:NSMonthCalendarUnit|NSDayCalendarUnit fromDate:self];
-    return [NSString stringWithFormat:@"%@ %d", [[[[NSDateFormatter alloc] init] shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day]];
+    NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+    NSString *ret = [NSString stringWithFormat:@"%@ %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day]];
+    [dateFormatter release];
+    return ret;
+}
+
+- (NSString *) description
+{
+    [NSDateFormatter setDefaultFormatterBehavior:NSDateFormatterBehavior10_4];
+    NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
+    [formatter setDateFormat:@"y-M-d H:m:sZ"];
+    NSString *ret = [formatter stringFromDate:self];
+    [formatter release];
+        
+    return ret;
 }
 @end

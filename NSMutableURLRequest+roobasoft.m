@@ -34,15 +34,22 @@
 
     [self setHTTPMethod:@"POST"];
 
-    NSString *postLength = [NSString stringWithFormat:@"%d", [postData length]];
+    NSString *postLength = [[NSString alloc] initWithFormat:@"%d", [postData length]];
     [self setValue:postLength forHTTPHeaderField:@"Content-Length"];
+    [postLength release];
+    
     [self setValue:@"application/x-www-form-urlencoded" forHTTPHeaderField:@"Content-Type"];
     [self setHTTPBody:postData];
 }
 
 - (void) addUsername:(NSString *)username andPassword:(NSString *)password
 {
-    NSString *encoded = [[[NSString stringWithFormat:@"%@:%@", username, password] dataUsingEncoding:NSUTF8StringEncoding] encodeBase64];
-    [self setValue:[NSString stringWithFormat:@"Basic %@", encoded] forHTTPHeaderField:@"Authorization"];    
+    NSString *stringToEncode = [[NSString alloc] initWithFormat:@"%@:%@", username, password];
+    NSString *encoded = [[stringToEncode dataUsingEncoding:NSUTF8StringEncoding] encodeBase64];
+    NSString *to_pass = [[NSString alloc] initWithFormat:@"Basic %@", encoded];
+    [self setValue:to_pass forHTTPHeaderField:@"Authorization"];
+    
+    [stringToEncode release];
+    [to_pass release];
 }
 @end
