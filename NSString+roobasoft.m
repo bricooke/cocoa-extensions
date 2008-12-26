@@ -45,15 +45,24 @@
 
 // assumes self is in form
 // 2008-10-29T06:22:08-0600
+// 2009-01-02T15:40:19Z
 - (NSDate *) dateFromJSON
 {
     NSDateFormatter *formatter = [[NSDateFormatter alloc] init];
     [formatter setDateFormat:@"y-M-d H:m:sZ"];
-    NSDate *ret = [formatter dateFromString:[self stringByReplacingOccurrencesOfString:@"T" withString:@" "]];    
+    NSDate *ret = [formatter dateFromString:[[self stringByReplacingOccurrencesOfString:@"T" withString:@" "] stringByReplacingOccurrencesOfString:@"Z" withString:@"+0000"]];    
     
     [formatter release];
     
     return ret;
+}
+
+- (NSString *) truncate:(NSInteger)size
+{
+    if ([self length] <= size)
+        return self;
+    
+    return [NSString stringWithFormat:@"%@...", [[self substringToIndex:size-3] stringByReplacingOccurrencesOfString:@"\n" withString:@" "]];
 }
 
 @end

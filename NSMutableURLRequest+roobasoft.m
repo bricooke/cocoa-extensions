@@ -24,7 +24,7 @@
 // OTHER DEALINGS IN THE SOFTWARE.
 
 #import "NSMutableURLRequest+roobasoft.h"
-
+#import "NSData-Base64Extensions.h"
 
 @implementation NSMutableURLRequest (roobasoft) 
 

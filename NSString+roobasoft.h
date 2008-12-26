@@ -32,4 +32,6 @@
 
 - (NSString *) urlEncode;
 - (NSDate *)   dateFromJSON; // 2008-10-29T06:22:08-0600 -> NSDate
+
+- (NSString *) truncate:(NSInteger)size;
 @end

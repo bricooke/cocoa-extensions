@@ -33,6 +33,11 @@
 
 + (NSDate *) midnight;
 - (NSDate *) midnight;
++ (NSDate *) justBeforeMidnight;
+- (NSDate *) justBeforeMidnight;
+
++ (NSDate *) addDays:(NSInteger)days;
+- (NSDate *) addDays:(NSInteger)days;
 
 + (NSDate *) tomorrow;
 - (NSDate *) tomorrow;
@@ -41,6 +46,24 @@
 - (NSDate *) yesterday;
 
 - (NSString *) pretty;
+- (NSString *) prettyWithYear:(BOOL)withYear;
+- (NSString *) prettyWithYear:(BOOL)withYear yesterdaySupport:(BOOL)yesterdaySupport;
 
 - (NSString *) description;
+
+- (NSInteger) daysTill:(NSDate *)otherDate;
+
++ (NSDate *) nextWeekday;
+- (NSDate *) nextWeekday;
+
++ (NSDate *) noon;
+- (NSDate *) noon;
+
++ (NSDate *) friday;
+- (NSDate *) friday;
+
++ (NSDate *) saturday;
+- (NSDate *) saturday;
+
+
 @end

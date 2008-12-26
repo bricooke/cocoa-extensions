@@ -29,7 +29,22 @@
 
 static int midnight_offset = 0;
 
+@interface NSDate (private_roobasoft)
+- (NSDate *) nextDay:(NSInteger)weekdayUnit;
+@end
+
+
 @implementation NSDate (roobasoft)
+
+#ifdef DEBUG
+// tomfoolery
+//+ (id) date
+//{
+//    return [NSDate dateWithTimeIntervalSinceNow:(60*60*24*(4))];
+//}
+#endif
+
+
 + (void) setMidnightOffset:(NSInteger)offset
 {
     midnight_offset = offset;
@@ -54,6 +69,38 @@ static int midnight_offset = 0;
     }
 }
 
++ (NSDate *) justBeforeMidnight
+{
+    return [[NSDate date] justBeforeMidnight];
+}
+
+- (NSDate *) justBeforeMidnight
+{
+    return [NSDate dateWithTimeIntervalSince1970:[[self midnight] timeIntervalSince1970]-60];
+}
+
++ (NSDate *) addDays:(NSInteger)days
+{
+    return [[NSDate date] addDays:days];
+}
+
+- (NSDate *) addDays:(NSInteger)days
+{
+    NSDate *t = [self addTimeInterval:days * (24*60*60)];
+    
+    // handle day light saving changes!
+    // if the hour is different we were adjusted. adjust back.
+    NSDateComponents *self_comps = [[NSCalendar currentCalendar] components:NSHourCalendarUnit fromDate:self];
+    NSDateComponents *future_comps = [[NSCalendar currentCalendar] components:NSHourCalendarUnit fromDate:t];
+    
+    if ([future_comps hour] != [self_comps hour])
+    {
+        t = [t addTimeInterval:(60*60)*[future_comps hour] - [self_comps hour]];
+    }
+    return t;
+    
+}
+
 + (NSDate *) tomorrow
 {
     return [[NSDate date] tomorrow];
@@ -61,18 +108,7 @@ static int midnight_offset = 0;
 
 - (NSDate *) tomorrow
 {
-    NSDate *t = [self addTimeInterval:(24*60*60)];
-    
-    // handle day light saving changes!
-    // if the hour is different we were adjusted. adjust back.
-    NSDateComponents *self_comps = [[NSCalendar currentCalendar] components:NSHourCalendarUnit fromDate:self];
-    NSDateComponents *tomorrow_comps = [[NSCalendar currentCalendar] components:NSHourCalendarUnit fromDate:t];
-    
-    if ([tomorrow_comps hour] != [self_comps hour])
-    {
-        t = [t addTimeInterval:(60*60)*[tomorrow_comps hour] - [self_comps hour]];
-    }
-    return t;
+    return [self addDays:1];
 }
 
 + (NSDate *) yesterday
@@ -85,23 +121,101 @@ static int midnight_offset = 0;
     return [self addTimeInterval:(-24*60*60)];
 }
 
++ (NSDate *) friday
+{
+    return [[NSDate date] friday];
+}
+
+- (NSDate *) friday
+{
+    return [self nextDay:6];
+}
+
++ (NSDate *) saturday
+{
+    return [[NSDate date] saturday];
+}
+
+- (NSDate *) saturday
+{
+    return [self nextDay:7];
+}
+
+- (NSDate *) nextDay:(NSInteger)weekdayUnit
+{
+    NSDateComponents *comps = [[NSCalendar currentCalendar] components:(NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit|NSWeekdayCalendarUnit) fromDate:self];
+    
+    if (weekdayUnit-[comps weekday] <= 0)
+        [comps setDay:7 + [comps day] + weekdayUnit - [comps weekday]];
+    else
+        [comps setDay:[comps day] + weekdayUnit - [comps weekday]];
+    
+    return [[NSCalendar currentCalendar] dateFromComponents:comps];        
+}
+
+
++ (NSDate *) nextWeekday
+{
+    return [[NSDate date] nextWeekday];
+}
+
+- (NSDate *) nextWeekday
+{
+    // is it a friday or a saturday?
+    NSDateComponents *comps = [[NSCalendar currentCalendar] components:(NSWeekdayCalendarUnit) fromDate:self];
+    
+    if ([comps weekday] == 6)
+    {
+        // add 3 days to get us to 12:00, monday
+        // sat, sun, mon.noon
+        return [[self addDays:3] noon];
+    }
+    else if ([comps weekday] == 7)
+    {
+        return [[self addDays:2] noon];
+    }
+    else
+    {
+        return [[self addDays:1] noon];
+    }
+}
+
 - (NSString *) pretty
+{
+    return [self prettyWithYear:NO];
+}
+
+- (NSString *)prettyWithYear:(BOOL)withYear
+{
+    return [self prettyWithYear:withYear yesterdaySupport:YES];
+}
+
+- (NSString *) prettyWithYear:(BOOL)withYear yesterdaySupport:(BOOL)yesterdaySupport
 {
     // handle 'today' and 'yesterday'
     if ([[self midnight] compare:[NSDate midnight]] == NSOrderedSame)
     {
         return @"Today";
     }
-    else if ([[self midnight] compare:[[NSDate yesterday] midnight]] == NSOrderedSame)
+    else if (yesterdaySupport && [[self midnight] compare:[[NSDate yesterday] midnight]] == NSOrderedSame)
     {
         return @"Yesterday";
     }
     
-    NSDateComponents *comps = [[NSCalendar currentCalendar] components:NSMonthCalendarUnit|NSDayCalendarUnit fromDate:self];
+    NSDateComponents *comps = [[NSCalendar currentCalendar] components:NSMonthCalendarUnit|NSDayCalendarUnit|NSYearCalendarUnit fromDate:self];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
-    NSString *ret = [NSString stringWithFormat:@"%@ %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day]];
+    
+    NSString *ret = nil;
+    if (withYear)
+    {
+        ret = [NSString stringWithFormat:@"%@ %d, %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day], [comps year]];
+    }
+    else
+    {
+        ret = [NSString stringWithFormat:@"%@ %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day]];        
+    }
     [dateFormatter release];
-    return ret;
+    return ret;    
 }
 
 - (NSString *) description
@@ -114,4 +228,22 @@ static int midnight_offset = 0;
         
     return ret;
 }
+
+- (NSInteger) daysTill:(NSDate *)otherDate
+{
+    return (NSInteger)(([[otherDate midnight] timeIntervalSince1970] - [[self midnight] timeIntervalSince1970]) / (24*60*60));
+}
+
++ (NSDate *) noon
+{
+    return [[NSDate date] noon];
+}
+
+- (NSDate *) noon
+{
+    NSDateComponents *comps = [[NSCalendar currentCalendar] components:(NSYearCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit) fromDate:self];
+
+    return [[[NSCalendar currentCalendar] dateFromComponents:comps] addTimeInterval:12*60*60];
+}
+
 @end
