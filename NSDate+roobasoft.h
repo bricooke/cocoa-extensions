@@ -48,6 +48,7 @@
 - (NSString *) pretty;
 - (NSString *) prettyWithYear:(BOOL)withYear;
 - (NSString *) prettyWithYear:(BOOL)withYear yesterdaySupport:(BOOL)yesterdaySupport;
+- (NSString *) prettyWithYear:(BOOL)withYear yesterdaySupport:(BOOL)yesterdaySupport longFormat:(BOOL)longFormat;
 
 - (NSString *) description;
 

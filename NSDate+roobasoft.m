@@ -40,7 +40,7 @@ static int midnight_offset = 0;
 // tomfoolery
 //+ (id) date
 //{
-//    return [NSDate dateWithTimeIntervalSinceNow:(60*60*24*(4))];
+//    return [NSDate dateWithTimeIntervalSinceNow:(60*60*24*(1))];
 //}
 #endif
 
@@ -192,6 +192,11 @@ static int midnight_offset = 0;
 
 - (NSString *) prettyWithYear:(BOOL)withYear yesterdaySupport:(BOOL)yesterdaySupport
 {
+    return [self prettyWithYear:withYear yesterdaySupport:yesterdaySupport longFormat:NO];
+}
+
+- (NSString *) prettyWithYear:(BOOL)withYear yesterdaySupport:(BOOL)yesterdaySupport longFormat:(BOOL)longFormat
+{
     // handle 'today' and 'yesterday'
     if ([[self midnight] compare:[NSDate midnight]] == NSOrderedSame)
     {
@@ -202,21 +207,31 @@ static int midnight_offset = 0;
         return @"Yesterday";
     }
     
-    NSDateComponents *comps = [[NSCalendar currentCalendar] components:NSMonthCalendarUnit|NSDayCalendarUnit|NSYearCalendarUnit fromDate:self];
+    NSDateComponents *comps = [[NSCalendar currentCalendar] components:NSWeekdayCalendarUnit|NSMonthCalendarUnit|NSDayCalendarUnit|NSYearCalendarUnit fromDate:self];
     NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
     
     NSString *ret = nil;
-    if (withYear)
+    
+    if (longFormat)
     {
-        ret = [NSString stringWithFormat:@"%@ %d, %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day], [comps year]];
+        [dateFormatter setDateStyle:NSDateFormatterFullStyle];
+        ret = [dateFormatter stringFromDate:self];
     }
     else
     {
-        ret = [NSString stringWithFormat:@"%@ %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day]];        
+        if (withYear)
+        {
+            ret = [NSString stringWithFormat:@"%@ %d, %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day], [comps year]];
+        }
+        else
+        {
+            ret = [NSString stringWithFormat:@"%@ %d", [[dateFormatter shortMonthSymbols] objectAtIndex:[comps month]-1], [comps day]];        
+        }
     }
     [dateFormatter release];
     return ret;    
 }
+
 
 - (NSString *) description
 {
